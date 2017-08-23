@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // GCM_Sakoe_cpp
 List GCM_Sakoe_cpp(Rcpp::NumericMatrix cM, int ws);
-RcppExport SEXP IncDTW_GCM_Sakoe_cpp(SEXP cMSEXP, SEXP wsSEXP) {
+RcppExport SEXP _IncDTW_GCM_Sakoe_cpp(SEXP cMSEXP, SEXP wsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -19,7 +19,7 @@ END_RCPP
 }
 // IGCM_Sakoe_cpp
 List IGCM_Sakoe_cpp(Rcpp::NumericMatrix gcmN, Rcpp::NumericMatrix dmN, Rcpp::NumericMatrix cmN, int ws);
-RcppExport SEXP IncDTW_IGCM_Sakoe_cpp(SEXP gcmNSEXP, SEXP dmNSEXP, SEXP cmNSEXP, SEXP wsSEXP) {
+RcppExport SEXP _IncDTW_IGCM_Sakoe_cpp(SEXP gcmNSEXP, SEXP dmNSEXP, SEXP cmNSEXP, SEXP wsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -33,7 +33,7 @@ END_RCPP
 }
 // GCM_cpp
 List GCM_cpp(Rcpp::NumericMatrix cM);
-RcppExport SEXP IncDTW_GCM_cpp(SEXP cMSEXP) {
+RcppExport SEXP _IncDTW_GCM_cpp(SEXP cMSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -44,7 +44,7 @@ END_RCPP
 }
 // IGCM_cpp
 List IGCM_cpp(Rcpp::NumericMatrix gcmN, Rcpp::NumericMatrix dmN, Rcpp::NumericMatrix cmN);
-RcppExport SEXP IncDTW_IGCM_cpp(SEXP gcmNSEXP, SEXP dmNSEXP, SEXP cmNSEXP) {
+RcppExport SEXP _IncDTW_IGCM_cpp(SEXP gcmNSEXP, SEXP dmNSEXP, SEXP cmNSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -57,7 +57,7 @@ END_RCPP
 }
 // BACKTRACK_cpp
 List BACKTRACK_cpp(Rcpp::NumericMatrix dm);
-RcppExport SEXP IncDTW_BACKTRACK_cpp(SEXP dmSEXP) {
+RcppExport SEXP _IncDTW_BACKTRACK_cpp(SEXP dmSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;

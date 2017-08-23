@@ -7,6 +7,8 @@ List GCM_Sakoe_cpp(Rcpp::NumericMatrix cM, int ws){
    int m = cM.ncol();
    int iBegin = 0;
    int iEnd = 0;
+   int wsI = 0;
+   int wsJ = 0;
    double cost = 0;
 
    NumericMatrix gcm(n, m);
@@ -14,12 +16,15 @@ List GCM_Sakoe_cpp(Rcpp::NumericMatrix cM, int ws){
    std::fill( gcm.begin(), gcm.end(), NumericVector::get_na() );
    std::fill( dm.begin(), dm.end(), NumericVector::get_na() );
    
+   wsI = std::min(n, ws+1);
+   wsJ = std::min(m, ws+1);
+   
    gcm(0,0) = cM(0,0);
-   for(int i =1; i <= ws; i++){
+   for(int i =1; i < wsI; i++){
       dm(i,0)=3;
       gcm(i,0) = cM(i, 0) + gcm(i - 1, 0);
    }
-   for(int j =1; j <= ws; j++){
+   for(int j =1; j < wsJ; j++){
       dm(0,j)=2;
       gcm(0, j) = cM(0, j) + gcm(0, j - 1);
    }
@@ -101,6 +106,9 @@ List IGCM_Sakoe_cpp(Rcpp::NumericMatrix gcmN, //global costmatrix with new empty
    double cost;
    int iBegin;
    int iEnd;
+   int wsJ = 0;
+   
+   wsJ = std::min(m, ws+1);
    
    // first row
    if((m-Nnew) < ws){
@@ -109,7 +117,7 @@ List IGCM_Sakoe_cpp(Rcpp::NumericMatrix gcmN, //global costmatrix with new empty
          gcmN(0,j) = gcmN(0,j-1) + cmN(0,(j-m+Nnew)); 
          dmN(0,j)  = 2;   
          j = j + 1;
-      } while (j<ws);
+      } while (j < wsJ);
    }
    
    // remaining
