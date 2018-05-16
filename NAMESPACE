@@ -1,3 +1,5 @@
+export(dtw2vec)
+export(idtw2vec)
 export(dtw)
 export(idtw)
 export(dec_dm)

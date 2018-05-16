@@ -35,8 +35,10 @@ Maximilian Leodolter
 \examples{
 Q <- cumsum(rnorm(100))
 C <- Q[11:100] + rnorm(90, 0, 0.5)
-tmp <- dtw(Q=Q, C=C, ws = 15, return_diffM = FALSE) # the ordinary calculation
+tmp <- dtw(Q = Q, C = C, ws = 15, return_wp = TRUE, return_QC = TRUE) # the ordinary calculation
 plotQC(tmp, Q, C)
 plotWarp(tmp, Q, C)
-plot(tmp, Q, C, type = 'warp')
+plot(tmp, type = 'warp')
+plot(tmp, Q, C, type = 'QC')
+plot(tmp, type = 'QC')# since return_QC = TRUE, this is also possible
 }

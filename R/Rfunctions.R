@@ -1,4 +1,8 @@
-dtw <- function(Q, C, ws = NULL, return_diffM = FALSE, return_QC = FALSE){
+dtw <- function(Q, C, ws = NULL, return_cm = FALSE,
+                                 return_diffM = FALSE,
+                                 return_wp = FALSE,
+                                 return_diffp = FALSE,
+                                 return_QC = FALSE){
    # require(GCM)
    # wrapper function for the C++ implementation of
    # an calculation of the global cost matrix + direction matrix
@@ -11,6 +15,8 @@ dtw <- function(Q, C, ws = NULL, return_diffM = FALSE, return_QC = FALSE){
    #           if Q is not a vector C needs to be one 
    #           of the following strings ('diffM', 'cm')
   
+   if(return_diffp) return_wp <- TRUE
+   
    if(is.character(C)){
       if(C == "diffM"){
          cm <- abs(Q)
@@ -23,6 +29,7 @@ dtw <- function(Q, C, ws = NULL, return_diffM = FALSE, return_QC = FALSE){
          cm <- Q
          n <- nrow(cm)
          m <- ncol(cm)
+         return_diffp <- FALSE
          diffM <- NA
       } else{
          stop("C needs to be a vector or one of the two strings: 'diffM' for difference Matrix or 'cm' for cost Matrix")
@@ -54,11 +61,28 @@ dtw <- function(Q, C, ws = NULL, return_diffM = FALSE, return_QC = FALSE){
    } else {
       ret <- GCM_Sakoe_cpp(cm, ws)
    }
-   tmp <- BACKTRACK_cpp(ret$dm)
-   ret <- c(ret, list(ii = rev(tmp$ii),
-                      jj = rev(tmp$jj),
-                      wp = rev(tmp$wp)))
+   
+   #--- get warping path and diff-path
+   if(return_wp){
+      if(return_diffp){
+         if(is.integer(diffM[2,2])){
+            tmp <- BACKTRACK2II_cpp(ret$dm, diffM)   
+         }else{
+            tmp <- BACKTRACK2IN_cpp(ret$dm, diffM)
+         }
+         ret <- c(ret, list(diffp = tmp$diffp))
+      }else {
+         tmp <- BACKTRACK_cpp(ret$dm)
+      }
+      ret <- c(ret, list(ii = rev(tmp$ii),
+                         jj = rev(tmp$jj),
+                         wp = rev(tmp$wp)))
+   }
+   
+   #--- add dtw_distance
+   ret <- c(list(distance = ret$gcm[n, m]), ret)
 
+   if(return_cm) ret <- c(ret, list(cm = cm))
    if(return_diffM) ret <- c(ret, list(diffM = diffM))
    if(return_QC) ret <- c(ret, list(Q = Q, C = C))
    class(ret) <- append(class(ret), "idtw")
@@ -66,8 +90,16 @@ dtw <- function(Q, C, ws = NULL, return_diffM = FALSE, return_QC = FALSE){
 }
 
 
-idtw <- function(Q, C, newO, gcm, dm, ws = NULL, 
-                 return_diffM = FALSE, return_QC = FALSE){
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+idtw <- function(Q, C, newO, gcm, dm, diffM = NULL, ws = NULL, 
+                 return_cm = FALSE,
+                 return_diffM = FALSE,
+                 return_wp = FALSE,
+                 return_diffp = FALSE,
+                 return_QC = FALSE){
    # require(GCM)
    # wrapper function for the C++ implementation of
    # an incremental calculation of the global cost matrix + direction matrix
@@ -78,11 +110,44 @@ idtw <- function(Q, C, newO, gcm, dm, ws = NULL,
    # newO ... one dimensional vector, new observation, to be appended to C
    # gcm ... global cost matrix, output from dtw(Q,C)
    # dm ... direction matrix, output from dtw(Q,C)
-
+   # diffM ... differences matrix, output from dtw(Q,C) (only important if return_diffp == TRUE)
+   
+   if(return_diffp) return_wp <- TRUE
+   
+   
+   if(is.character(C)){
+      return_QC <- FALSE
+      if(C == "diffM_add"){
+         cm_add <- abs(Q)
+         n <- nrow(cm_add)#should be equal nrow(gcm)
+         m <- ncol(gcm)
+         o <- ncol(cm_add)
+         
+         if(return_diffM) diffM <- Q
+         rm(list=c("Q"))
+         
+      } else if(C == "cm_add"){
+         cm_add <- Q
+         n <- nrow(cm_add)#should be equal nrow(gcm)
+         m <- ncol(gcm)
+         o <- ncol(cm_add)
+         
+         rm(list=c("Q"))
+         return_diffp <- FALSE
+         diffM <- NA
+      } else{
+         stop("C needs to be a vector or one of the two strings: 
+               'diffM_add' for difference Matrix or
+              'cm_add' for cost Matrix")
+      }
+   } else {
+      n <- length(Q)
+      m <- ncol(gcm)
+      o <- length(newO)
+   }
+   
+   
    #--- initial checking
-   n <- length(Q)
-   m <- length(C)
-   o <- length(newO)
    m2 <- o+m
    if(!is.null(ws)){
       if(abs(n-m2)>ws){
@@ -91,33 +156,57 @@ idtw <- function(Q, C, newO, gcm, dm, ws = NULL,
    }
 
    #--- preparation
-   C <- c(C, newO)
    gcm <- cbind(gcm, matrix(NA, nrow = n, ncol = o))
    dm  <- cbind(dm, matrix(NA, nrow = n, ncol = o))
-   mQ <- matrix(Q, ncol = o, nrow = n, byrow = F)
-   mC <- matrix(newO, ncol = o, nrow = n, byrow = T)
-   diffM <- matrix((mQ - mC), ncol = length(newO))
-   cm <- abs(diffM)
+   if(!is.character(C)){
+      mQ <- matrix(Q, ncol = o, nrow = n, byrow = F)
+      mC <- matrix(newO, ncol = o, nrow = n, byrow = T)
+      diffM_add <- matrix((mQ - mC), ncol = length(newO))
+      cm_add <- abs(diffM_add)
+   }
 
    #--- calculation in C++
    if(is.null(ws)){
-      ret <- IGCM_cpp(gcmN = gcm, dmN = dm, cmN = cm)
+      ret <- IGCM_cpp(gcmN = gcm, dmN = dm, cmN = cm_add)
    } else {
-      ret <- IGCM_Sakoe_cpp(gcmN = gcm, dmN = dm, cmN = cm, ws = ws)
+      ret <- IGCM_Sakoe_cpp(gcmN = gcm, dmN = dm, cmN = cm_add, ws = ws)
    }
-   tmp <- BACKTRACK_cpp(ret$dm)
-   ret <- c(ret, list(ii = rev(tmp$ii),
-                      jj = rev(tmp$jj),
-                      wp = rev(tmp$wp)))
-
+   
+   #--- get warping path and diff-path
+   if(return_diffp | return_diffM) diffM <- cbind(diffM, diffM_add)
+   if(return_wp){
+      if(return_diffp){
+         if( is.integer(diffM[2,2]) & is.integer(diffM_add[2,1]) ){
+            tmp <- BACKTRACK2II_cpp(ret$dm, diffM)   
+         }else{
+            tmp <- BACKTRACK2IN_cpp(ret$dm, diffM)
+         }
+         ret <- c(ret, list(diffp = tmp$diffp))
+      }else {
+         tmp <- BACKTRACK_cpp(ret$dm)
+      }
+      ret <- c(ret, list(ii = rev(tmp$ii),
+                         jj = rev(tmp$jj),
+                         wp = rev(tmp$wp)))
+   }
+   
+   
+   #--- add dtw_distance
+   ret <- c(list(distance = ret$gcm[n, m2]), ret)
+   
+   if(return_cm) ret <- c(ret, list(cm = cm_add))
    if(return_diffM) ret <- c(ret, list(diffM = diffM))
-   if(return_QC) ret <- c(ret, list(Q = Q, C = C))
+   if(return_QC) ret <- c(ret, list(Q = Q, C = c(C, newO)))
    class(ret) <- append(class(ret), "idtw")
    return(ret)
 }
 
 
-dec_dm <- function(dm, Ndec){
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+dec_dm <- function(dm, Ndec, diffM = NULL){
   # wrapper function for the C++ implementation of
   # an decremental calculation of the warping path subject to a given
   # direction matrix for dynamic time warping
@@ -125,6 +214,10 @@ dec_dm <- function(dm, Ndec){
   # dm ... direction matrix, output from dtw(Q,C)
   # Ndec ... integer, number of observations (columns) to be reduced
   
+   if(!is.integer(dm[2,2])){
+      warning("The direction matrix is no integer matrix -> takes longer to process")
+   }
+   
   Nnew <- ncol(dm) - Ndec
   if(Nnew == 1){
      warning("Nnew = 1, calculation is maybe meaningless")
@@ -132,14 +225,106 @@ dec_dm <- function(dm, Ndec){
                  jj = rep(1, nrow(dm)),
                  wp = rep(3, nrow(dm)-1) )
   } else {
-     tmp <- BACKTRACK_cpp(dm[, 1:Nnew])
-     ret <- list(ii = rev(tmp$ii),
-                 jj = rev(tmp$jj),
-                 wp = rev(tmp$wp))
+     if(is.null(diffM)){
+        tmp <- BACKTRACK_cpp(dm[, 1:Nnew])
+        ret <- list(ii = rev(tmp$ii),
+                    jj = rev(tmp$jj),
+                    wp = rev(tmp$wp))   
+     }else{
+        if(is.integer(diffM[2,2])){
+           tmp <- BACKTRACK2II_cpp(dm[, 1:Nnew], diffM)
+        }else{
+           tmp <- BACKTRACK2IN_cpp(dm[, 1:Nnew], diffM)
+        }
+        # tmp <- BACKTRACK_cpp2(dm[, 1:Nnew], diffM[, 1:Nnew])# should not make any difference
+        ret <- list(ii = rev(tmp$ii),
+                    jj = rev(tmp$jj),
+                    wp = rev(tmp$wp),
+                    diffp = rev(tmp$diffp))   
+     }
+     
   }
   return(ret)
 }
 
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+dtw2vec <- function(Q, C, ws = NULL, threshold = NULL){
+   # wrapper function for the C++ implementation
+   if(is.null(ws) & is.null(threshold)){
+      # fastest implementation for unrestricted warp
+      ret <- cpp_dtw2vec_v32(Q,C)
+      
+   }else if (!is.null(ws) & is.null(threshold)){
+      # sakoe chiba warping window
+      ret <- cpp_dtw2vec_ws(x=Q,y=C, ws = ws)
+      
+   }else if (is.null(ws) & !is.null(threshold)){
+      # early abandoning if the costs exceeds threshold
+      ret <- cpp_dtw2vec_ea(x=Q, y=C, threshold = threshold)
+      
+   }else{
+      # ea and sakoe chiba
+      ret <- cpp_dtw2vec_ws_ea(x=Q, y=C, ws = ws, threshold = threshold)
+      
+   }
+   return(ret)
+}
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+idtw2vec <- function(Q, newObs, gcm_lc = NULL, nC = NULL, ws = NULL){
+   # wrapper function for the C++ implementation
+   if(is.null(gcm_lc)){
+      # initial case
+      if(length(newObs) <= 1){
+         stop("ERROR: in the initial calculation the time 
+              series newObs needs to be at least 2 observations long")
+         return(NA)
+      }
+      if(is.null(ws)){
+         ret <- cpp_dtw2vec_inc(x=Q, newObs = newObs[-1], 
+                                gcm_lc = cumsum(abs(Q-newObs[1])))
+         
+      }else if (!is.null(ws) & !is.null(nC)){
+         # sakoe chiba warping window
+         ret <- cpp_dtw2vec_inc_ws(x=Q, newObs = newObs[-1], 
+                                   gcm_lc = cumsum(abs(Q-newObs[1])), 
+                                   ws = ws, ny = nC)
+         
+      }else {
+         stop("ERROR: if ws is not NULL, then nC must not be NULL")
+         return(NA)
+      }
+      
+      
+   }else{
+      # running case
+      if(is.null(ws)){
+         ret <- cpp_dtw2vec_inc(x=Q, newObs = newObs, gcm_lc = gcm_lc )
+         
+      }else if (!is.null(ws) & !is.null(nC)){
+         # sakoe chiba warping window
+         ret <- cpp_dtw2vec_inc_ws(x=Q, newObs = newObs, gcm_lc = gcm_lc,
+                                   ws=ws, ny = nC)
+         
+      }else {
+         stop("ERROR: if ws is not NULL, then nC must not be NULL")
+         return(NA)
+      }   
+   }
+   return(ret)
+}
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 plot.idtw <- function(x, type = "QC", ...) {
@@ -153,9 +338,17 @@ plot.idtw <- function(x, type = "QC", ...) {
    )
 }
 
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
 ## an alias
 plot_idtw <- plot.idtw;
 
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 plotQC <- function(x, Q = NULL, C = NULL, ...){
@@ -191,6 +384,10 @@ plotQC <- function(x, Q = NULL, C = NULL, ...){
    
    return(ret)
 }
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 plotWarp <- function(x, Q = NULL, C = NULL, ...){

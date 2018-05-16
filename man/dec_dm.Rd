@@ -8,17 +8,19 @@ dec_dm
   wrapper function for the C++ implementation of an decremental calculation of the warping path subject to a given direction matrix for dynamic time warping
 }
 \usage{
-dec_dm(dm, Ndec)
+dec_dm(dm, Ndec, diffM = NULL)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{dm}{direction matrix, output from dtw(Q=Q, C=C, ws=ws)}
 \item{Ndec}{integer, number of observations (columns) to be reduced}
+\item{diffM}{matrix of differences}
 }
 \value{
 \item{wp}{warping path}
 \item{ii}{indices of C of the optimal path}
 \item{jj}{indices of Q of the optimal path}
+\item{diffp}{path of differences (only returned if diffM is not NULL)}
 }
 \references{
 Sakoe, H.; Chiba, S., Dynamic programming algorithm optimization for spoken word recognition, Acoustics, Speech, and Signal Processing [see also IEEE Transactions on Signal Processing], IEEE Transactions on , vol.26, no.1, pp. 43-49, Feb 1978.

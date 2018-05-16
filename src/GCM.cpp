@@ -12,7 +12,7 @@ List GCM_Sakoe_cpp(Rcpp::NumericMatrix cM, int ws){
    double cost = 0;
 
    NumericMatrix gcm(n, m);
-   NumericMatrix dm(n, m);
+   IntegerMatrix dm(n, m);
    std::fill( gcm.begin(), gcm.end(), NumericVector::get_na() );
    std::fill( dm.begin(), dm.end(), NumericVector::get_na() );
    
@@ -91,7 +91,7 @@ List GCM_Sakoe_cpp(Rcpp::NumericMatrix cM, int ws){
 using namespace Rcpp;
 // [[Rcpp::export]]
 List IGCM_Sakoe_cpp(Rcpp::NumericMatrix gcmN, //global costmatrix with new empty columns
-                    Rcpp::NumericMatrix dmN, //direction matrix with new empty columns
+                    Rcpp::IntegerMatrix dmN, //direction matrix with new empty columns
                     Rcpp::NumericMatrix cmN,//local cost matrix of new observations and old constant vector
                     int ws){ 
    
@@ -211,7 +211,7 @@ List GCM_cpp(Rcpp::NumericMatrix cM){
    double cost;
    //std::vector<double> lc;//local costs
    NumericMatrix gcm(n, m);
-   NumericMatrix dm(n, m);
+   IntegerMatrix dm(n, m);
    
    gcm(0,0) = cM(0,0);
    for(int i =1; i < n; i++){
@@ -222,7 +222,8 @@ List GCM_cpp(Rcpp::NumericMatrix cM){
       dm(0,j)=2;
       gcm(0, j) = cM(0, j) + gcm(0, j - 1);
    }
-   dm(0,0) = NAN;
+   // dm(0,0) = NAN;
+   dm(0,0) = NA_INTEGER;
    
    for (int i = 1; i < n; i++){
       for (int j = 1; j < m; j++){
@@ -240,6 +241,7 @@ List GCM_cpp(Rcpp::NumericMatrix cM){
          
       }
    }
+   
    //List z = List::create( DTW ) ;
    List ret;
    ret["gcm"] = gcm;
@@ -257,7 +259,7 @@ List GCM_cpp(Rcpp::NumericMatrix cM){
 using namespace Rcpp;
 // [[Rcpp::export]]
 List IGCM_cpp(Rcpp::NumericMatrix gcmN, //global costmatrix with new empty columns
-          Rcpp::NumericMatrix dmN, //direction matrix with new empty columns
+          Rcpp::IntegerMatrix dmN, //direction matrix with new empty columns
           Rcpp::NumericMatrix cmN){ //local cost matrix of new observations and old constant vector
           
           
@@ -306,7 +308,7 @@ List IGCM_cpp(Rcpp::NumericMatrix gcmN, //global costmatrix with new empty colum
 using namespace Rcpp;
 using namespace std;
 // [[Rcpp::export]]
-List BACKTRACK_cpp(Rcpp::NumericMatrix dm){//direction matrix with new empty columns
+List BACKTRACK_cpp(Rcpp::IntegerMatrix dm){//direction matrix with new empty columns
               
    int n = dm.nrow();
    int m = dm.ncol();
@@ -347,3 +349,110 @@ List BACKTRACK_cpp(Rcpp::NumericMatrix dm){//direction matrix with new empty col
    ret["jj"] = jj;
    return ret ;
 }
+
+
+
+//################################################################################
+//################################################################################
+
+
+
+#include <Rcpp.h>
+using namespace Rcpp;
+using namespace std;
+// [[Rcpp::export]]
+List BACKTRACK2IN_cpp(Rcpp::IntegerMatrix dm, Rcpp::NumericMatrix diffM){
+   
+   int n = dm.nrow();
+   int m = dm.ncol();
+   int i = n;
+   int j = m;
+   int step;
+   vector<int> ii;
+   vector<int> jj;
+   vector<int> wp;//warping path
+   vector<double> diffp;//path of differences   
+   diffp.push_back(diffM(n-1, m-1));
+   
+   ii.push_back(i);
+   jj.push_back(j);
+   do{
+      step = dm(i-1,j-1);
+      if(step == 1){
+         i = i - 1;
+         j = j - 1;
+      } else if ( step == 2){
+         j = j - 1;
+      } else if ( step == 3){
+         i = i - 1;
+      } else{
+         i = 99;
+         j = 99;
+      }
+      ii.push_back(i);
+      jj.push_back(j);
+      wp.push_back(step);
+      diffp.push_back(diffM(i-1, j-1));
+   } while (i > 1 || j > 1);
+   
+   List ret;
+   ret["ii"] = ii;
+   ret["jj"] = jj;
+   ret["wp"] = wp;
+   ret["diffp"] = diffp;
+   return ret ;
+}
+
+
+
+//################################################################################
+//################################################################################
+
+
+
+#include <Rcpp.h>
+using namespace Rcpp;
+using namespace std;
+// [[Rcpp::export]]
+List BACKTRACK2II_cpp(Rcpp::IntegerMatrix dm, Rcpp::IntegerMatrix diffM){
+   
+   int n = dm.nrow();
+   int m = dm.ncol();
+   int i = n;
+   int j = m;
+   int step;
+   vector<int> ii;
+   vector<int> jj;
+   vector<int> wp;//warping path
+   vector<int> diffp;//path of differences   
+   diffp.push_back(diffM(n-1, m-1));
+   
+   ii.push_back(i);
+   jj.push_back(j);
+   do{
+      step = dm(i-1,j-1);
+      if(step == 1){
+         i = i - 1;
+         j = j - 1;
+      } else if ( step == 2){
+         j = j - 1;
+      } else if ( step == 3){
+         i = i - 1;
+      } else{
+         i = 99;
+         j = 99;
+      }
+      ii.push_back(i);
+      jj.push_back(j);
+      wp.push_back(step);
+      diffp.push_back(diffM(i-1, j-1));
+   } while (i > 1 || j > 1);
+   
+   List ret;
+   ret["ii"] = ii;
+   ret["jj"] = jj;
+   ret["wp"] = wp;
+   ret["diffp"] = diffp;
+   return ret ;
+}
+
