@@ -1,4 +1,0 @@
-* include function to average time series that are close to each other in terms of DTW
-* include function for z-norm time series
-* multivariate distance function for dtw
-* consolidte functions
