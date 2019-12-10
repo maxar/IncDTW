@@ -1,12 +1,12 @@
-context("test running dtw with znorm")
+context("test running dtw with zscale")
 
-goal <- function(h, x, ws, dm, sp, norm_type){
+goal <- function(h, x, ws, dm, sp, scale_type){
    nx <- length(x)
    nh <- length(h)
-   hnorm <- IncDTW::norm(h, type = norm_type)
+   hscale <- IncDTW::scale(h, type = scale_type)
    sapply(1:(nx-nh+1), function(i){
-      y <- IncDTW::norm(x[i:(i+nh-1)], type = norm_type)
-      IncDTW::dtw2vec(y, hnorm, dist_method = dm,
+      y <- IncDTW::scale(x[i:(i+nh-1)], type = scale_type)
+      IncDTW::dtw2vec(y, hscale, dist_method = dm,
                       step_pattern = sp, ws = ws)$dist
    })
 }
@@ -15,18 +15,18 @@ goal <- function(h, x, ws, dm, sp, norm_type){
 noise <- function(i) cumsum(rnorm(i))
 
 
-test_that("equal sapply univariate norm1, normalize z", {
+test_that("equal sapply univariate scale1, scale z", {
    
    dm <- "norm1"
    sp <- "symmetric1"
    WS <- 10
    
    h <- noise(10)
-   hnorm <- IncDTW::norm(h, type="z")
+   hscale <- IncDTW::scale(h, type="z")
    x <- c(noise(10), h, noise(10))
    
    ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "z", threshold = NULL, lower_bound = F)
+                 ws = WS, scale = "z", threshold = NULL, lower_bound = F)
    soll <- goal(h, x, WS, dm, sp, "z")
    
    
@@ -69,7 +69,7 @@ test_that("lot-mode", {
    WS <- 10
    
    h <- noise(10)
-   hnorm <- IncDTW::norm(h, type="z")
+   hscale <- IncDTW::scale(h, type="z")
    x1 <- c(noise(10), h, noise(10))
    x2 <- c(noise(10), h, noise(10))
    x3 <- c(noise(10), h, noise(10))
@@ -77,7 +77,7 @@ test_that("lot-mode", {
    
    
    ist <- rundtw(Q = h, C = list(x1, x2, x3), dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "01", threshold = NULL, lower_bound = F)
+                 ws = WS, scale = "01", threshold = NULL, lower_bound = F)
    ist <- unlist(ist$dist)
    soll <- goal(h, x, WS, dm, sp, "01")
    soll <- soll[!is.na(soll)]
@@ -86,7 +86,7 @@ test_that("lot-mode", {
    
    
    ist <- rundtw(Q = h, C = list(x1, x2, x3), dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "z", threshold = NULL, lower_bound = F)
+                 ws = WS, scale = "z", threshold = NULL, lower_bound = F)
    ist <- unlist(ist$dist)
    soll <- goal(h, x, WS, dm, sp, "z")
    soll <- soll[!is.na(soll)]
@@ -105,7 +105,7 @@ test_that("lot-mode kNN", {
    WS <- 10
    
    h <- noise(10)
-   hnorm <- IncDTW::norm(h, type="z")
+   hscale <- IncDTW::scale(h, type="z")
    x1 <- c(noise(20))
    x2 <- c(noise(10), h, noise(10))
    x3 <- c(noise(22))
@@ -113,7 +113,7 @@ test_that("lot-mode kNN", {
    x <- c(x1, Inf, x2, Inf, x3, Inf, x4)
    
    ret <- rundtw(Q = h, C = list(x1, x2, x3, x4), dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "z", threshold = NULL, lower_bound = F, k = 3)
+                 ws = WS, scale = "z", threshold = NULL, lower_bound = F, k = 3)
    
    counter <- 0
    for(i in 1:length(ret$knn_indices)){

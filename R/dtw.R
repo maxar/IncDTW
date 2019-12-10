@@ -655,9 +655,17 @@ dtw_disvec <- function(Q, lot, dist_method = c("norm1", "norm2", "norm2_square")
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-
 norm <- function(x, type = c("z", "01"), 
                  threshold = 1e-5,
+                 xmean = NULL, xsd = NULL, xmin = NULL, xmax = NULL){
+   
+   .Deprecated("scale")
+   return(
+      scale(x = x, type = type, threshold = threshold, xmean = xmean, xsd = xsd, xmin = xmin, xmax = xmax)
+   )
+}
+
+scale <- function(x, type = c("z", "01"), threshold = 1e-5,
                  xmean = NULL, xsd = NULL, xmin = NULL, xmax = NULL){
    
    type <- match.arg(type)

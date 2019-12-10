@@ -1,13 +1,20 @@
 rundtw <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
                    step_pattern = c("symmetric1", "symmetric2"), k = NULL, 
-                   normalize = c("01", "z", "none"), ws = NULL, threshold = NULL, lower_bound = TRUE,
-                   overlap_tol = 0, return_QC = FALSE){
+                   scale = c("01", "z", "none"),  
+                   ws = NULL, threshold = NULL, lower_bound = TRUE,
+                   overlap_tol = 0, return_QC = FALSE, normalize = c("01", "z", "none")){
    
+   
+   if (!missing("normalize")){
+      warning("Argument 'normalize' is deprecated, use 'scale' instead. 
+              The parameter 'scale' is set equal the parameter 'normalize'.")
+      scale <- normalize
+   }
    
    if(is.list(C)){
       return(
          rundtw_list(Q, C, dist_method, step_pattern, k, 
-                     normalize, ws, threshold, lower_bound,
+                     scale, ws, threshold, lower_bound,
                      overlap_tol, return_QC)
       )
    }
@@ -16,15 +23,15 @@ rundtw <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
    dist_method <- match.arg(dist_method)
    step_pattern <- match.arg(step_pattern)
    
-   if(is.logical(normalize)){
-      warning("The values TRUE and FALSE for the parameter 'normalize' are deprecated. Use '01' or 'none' instead.")
-      if(as.logical(normalize)){
-         normalize <- "01" 
+   if(is.logical(scale)){
+      warning("The values TRUE and FALSE for the parameter 'scale' are deprecated. Use '01' or 'none' instead.")
+      if(as.logical(scale)){
+         scale <- "01" 
       } else{
-         normalize <- "none"
+         scale <- "none"
       }
    }else{
-      normalize <- match.arg(normalize)   
+      scale <- match.arg(scale)   
    }
    
    initial_dim_check(Q = Q, C = C)
@@ -87,17 +94,17 @@ rundtw <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
       use_lb <- 0
    }
    
-   if(normalize == "01"){
-      do_norm <- 1
-      Q <- IncDTW::norm(Q, type = "01")
+   if(scale == "01"){
+      do_scale <- 1
+      Q <- IncDTW::scale(Q, type = "01")
       # Q <- norm(Q, type = "01")
       
-   }else if(normalize == "z"){
-      Q <- IncDTW::norm(Q, type = "z")
+   }else if(scale == "z"){
+      Q <- IncDTW::scale(Q, type = "z")
       # Q <- norm(Q, type = "z")
       
-   }else if (normalize == "none"){
-      do_norm <- 0
+   }else if (scale == "none"){
+      do_scale <- 0
    }
    
    if(is.null(ws)) ws <- ifelse(is.vector(Q), yes = length(Q), no = nrow(Q))
@@ -108,7 +115,7 @@ rundtw <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
          warning("dist_method is set to 'norm1' for the univariate case")
       }
       
-      if(normalize == "z"){
+      if(scale == "z"){
          ret <- cpp_rundtw_znorm(h = Q, x = C, 
                                  step_pattern = step_pattern, 
                                  ws = ws, threshold = threshold, overlap_tol = overlap_tol, 
@@ -118,14 +125,14 @@ rundtw <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
       }else{
          ret <- cpp_rundtw(h = Q, x = C, step_pattern = step_pattern, 
                            ws = ws, threshold = threshold, overlap_tol = overlap_tol,
-                           do_norm = do_norm, use_ea = use_ea, use_lb = use_lb, debug = debug,
+                           do_norm = do_scale, use_ea = use_ea, use_lb = use_lb, debug = debug,
                            kNN_inf_list = kNN_inf_list) 
       }
       
    }else{
       
       
-      if(normalize == "z"){
+      if(scale == "z"){
          ret <- cpp_rundtw_znorm_mv(h = Q, x = C, step_pattern = step_pattern, 
                                     dist_method = dist_method, ws = ws, threshold = threshold, overlap_tol = overlap_tol,
                                     use_ea = use_ea, use_lb = use_lb, debug = debug,
@@ -133,19 +140,19 @@ rundtw <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
       }else{
          ret <- cpp_rundtw_mv(h = Q, x = C, step_pattern = step_pattern, 
                               dist_method = dist_method, ws = ws, threshold = threshold, overlap_tol = overlap_tol,
-                              do_norm = do_norm, use_ea = use_ea, use_lb = use_lb, debug = debug,
+                              do_norm = do_scale, use_ea = use_ea, use_lb = use_lb, debug = debug,
                               kNN_inf_list = kNN_inf_list)   
       }
    }
    
-   names(ret$counter) <- c("norm_reset","norm_new_extreme", "norm_1step",
+   names(ret$counter) <- c("scale_reset","scale_new_extreme", "scale_1step",
                            "cm_reset", "cm_1step",
                            "early_abandon", "lower_bound")
    ret$counter["completed"] <- (NROW(C) - NROW(Q) + 1) - (ret$counter["early_abandon"] + ret$counter["lower_bound"]) 
    
-   if(normalize == "z"){
+   if(scale == "z"){
       ret$counter <- ret$counter[c("early_abandon", "lower_bound", "completed")]
-   }else if(normalize == "none"){
+   }else if(scale == "none"){
       ret$counter <- ret$counter[c("cm_reset", "cm_1step","early_abandon", "lower_bound", "completed")]
    }
    
@@ -185,7 +192,7 @@ rundtw <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
 
 rundtw_list <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
                         step_pattern = c("symmetric1", "symmetric2"), k = NULL, 
-                        normalize = c("01", "z", "none"), ws = NULL, threshold = NULL, lower_bound = TRUE,
+                        scale = c("01", "z", "none"), ws = NULL, threshold = NULL, lower_bound = TRUE,
                         overlap_tol = 0, return_QC = FALSE){
    
    
@@ -207,15 +214,15 @@ rundtw_list <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
       stop("Q and all elements of C need to be vectors or matrices of equal number of columns.")
    }
    
-   if(is.logical(normalize)){
-      warning("The values TRUE and FALSE for the parameter 'normalize' are deprecated. Use '01' or 'none' instead.")
-      if(as.logical(normalize)){
-         normalize <- "01" 
+   if(is.logical(scale)){
+      warning("The values TRUE and FALSE for the parameter 'scale' are deprecated. Use '01' or 'none' instead.")
+      if(as.logical(scale)){
+         scale <- "01" 
       } else{
-         normalize <- "none"
+         scale <- "none"
       }
    }else{
-      normalize <- match.arg(normalize)   
+      scale <- match.arg(scale)   
    }
    
    if(is.null(k)) {
@@ -261,15 +268,15 @@ rundtw_list <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
       use_lb <- 0
    }
    
-   if(normalize == "01"){
-      do_norm <- 1
-      Q <- IncDTW::norm(Q, type = "01")
+   if(scale == "01"){
+      do_scale <- 1
+      Q <- IncDTW::scale(Q, type = "01")
       
-   }else if(normalize == "z"){
-      Q <- IncDTW::norm(Q, type = "z")
+   }else if(scale == "z"){
+      Q <- IncDTW::scale(Q, type = "z")
       
-   }else if (normalize == "none"){
-      do_norm <- 0
+   }else if (scale == "none"){
+      do_scale <- 0
    }
    
    if(is.null(ws)) ws <- ifelse(is.vector(Q), yes = length(Q), no = nrow(Q))
@@ -290,7 +297,7 @@ rundtw_list <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
          warning("dist_method is set to 'norm1' for the univariate case")
       }
       
-      if(normalize == "z"){
+      if(scale == "z"){
          
          for(i in seq_along(C)){
             ret[[i]] <- cpp_rundtw_znorm_lot(h = Q, x = C[[i]], 
@@ -313,7 +320,7 @@ rundtw_list <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
                                        kNN_val_in = kup$kNN_val, kNN_ix_in = kup$kNN_ix, kNN_lot_ix_in = kup$kNN_lot_ix, 
                                        kNN_inf_list_in = kup$kNN_inf_list, lot_ix = i,
                                        step_pattern = step_pattern, ws = ws, threshold = threshold, 
-                                       overlap_tol = overlap_tol, do_norm = do_norm, use_ea = use_ea, use_lb = use_lb, debug = debug) 
+                                       overlap_tol = overlap_tol, do_norm = do_scale, use_ea = use_ea, use_lb = use_lb, debug = debug) 
             
             if(k > 0){
                kup <- kNN_update(kup = kup, bix = ret[[i]]$all_best_indices, 
@@ -325,7 +332,7 @@ rundtw_list <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
       
    }else{
       
-      if(normalize == "z"){
+      if(scale == "z"){
          
          for(i in seq_along(C)){
             ret[[i]] <- cpp_rundtw_znorm_mv_lot(h = Q, x = C[[i]], 
@@ -348,7 +355,7 @@ rundtw_list <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
                                           kNN_val_in = kup$kNN_val, kNN_ix_in = kup$kNN_ix, kNN_lot_ix_in = kup$kNN_lot_ix, 
                                           kNN_inf_list_in = kup$kNN_inf_list, lot_ix = i,
                                           step_pattern = step_pattern, dist_method = dist_method, ws = ws, threshold = threshold, 
-                                          overlap_tol = overlap_tol, do_norm = do_norm, use_ea = use_ea, use_lb = use_lb, debug = debug) 
+                                          overlap_tol = overlap_tol, do_norm = do_scale, use_ea = use_ea, use_lb = use_lb, debug = debug) 
             
             if(k > 0){
                kup <- kNN_update(kup = kup, bix = ret[[i]]$all_best_indices, 
@@ -360,14 +367,14 @@ rundtw_list <- function(Q, C, dist_method = c("norm1", "norm2", "norm2_square"),
    }
    
    counter <- Reduce("+", lapply(ret, "[[", "counter"))
-   names(counter) <- c("norm_reset","norm_new_extreme", "norm_1step",
+   names(counter) <- c("scale_reset","scale_new_extreme", "scale_1step",
                        "cm_reset", "cm_1step",
                        "early_abandon", "lower_bound")
    counter["completed"] <- sum(sapply(C, NROW) - NROW(Q) + 1) - (counter["early_abandon"] + counter["lower_bound"])
    
-   if(normalize == "z"){
+   if(scale == "z"){
       counter <- counter[c("early_abandon", "lower_bound", "completed")]
-   }else if(normalize == "none"){
+   }else if(scale == "none"){
       counter <- counter[c("cm_reset", "cm_1step","early_abandon", "lower_bound", "completed")]
    }
    

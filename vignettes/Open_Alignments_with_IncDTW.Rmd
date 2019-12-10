@@ -1,0 +1,205 @@
+---
+title: "Open Alignments with IncDTW"
+author: "Leodolter Maximilian"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: refs.bib
+vignette: >
+  %\VignetteIndexEntry{Open Alignments with IncDTW}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 1000)
+```
+
+
+
+```{r, echo = FALSE, message=FALSE}
+library(IncDTW)
+library(gridExtra)
+```
+<!-- % https://colinfay.me/writing-r-extensions/writing-r-documentation-files.html -->
+
+```{r,echo=FALSE}
+# suppressPackageStartupMessages(library(dendextend))
+```
+
+
+
+The original DTW algorithm has the restriction of fixed alignments at the beginning and the end of the time series, so that when calculating `dtw(Q, C)` the first element of `Q` must be aligned to the first element of `C`, and the last element of `Q` to the last element of `C`.
+
+This vignette demonstrates how to relax this restriction and how to allow one time series to be aligned only partially, so `dtw(Q, C[1:nc1, ])`, where `nc1 <= NROW(C)`.
+Also `dtw(Q, C[nc0:NROW(C), ])` is possible, where `nc0 >= 1`. 
+The counterpart for Q works analogously.
+
+&nbsp;
+&nbsp;
+<!-- ========================================================================================== -->
+<!-- ========================================================================================== -->
+
+## Open end alignment
+
+<!-- ========================================================================================== -->
+<!-- ========================================================================================== -->
+
+
+Once the global cost matrix `gcm` for the full alignment of Q and C is determined, the DTW distances for possible partial open-end alignments are given by the last column and last row of `gcm`. The function `dtw_partial()` returns the indices of the open-end alignment with the minimum normalized DTW distance. 
+
+
+In the following example we simulate two time series, `Q` and `C` as warped copy of `Q` (the function `simulate_timewarp()` randomly stretches and compresses time series) and append additional noise at the end of `Q`. Then we get the full alignment and use this as input to find the open-end alignment for a partial match of `C` and `Q`.
+
+
+
+```{r}
+set.seed(321)
+rw <- function(N) cumsum(rnorm(N))
+Q <- matrix(rw(100), ncol=2)
+C <- IncDTW::simulate_timewarp(Q, compress = 0.2)
+noise <- matrix(10 + rnorm(30), ncol=2)
+C <- rbind(C, noise)
+tmp <- IncDTW::dtw(Q = Q, C = C, return_QC = TRUE, return_wp = TRUE)
+par <- dtw_partial(tmp, partial_Q = FALSE, partial_C = TRUE)
+par
+```
+
+The optimal alignment range for `C`\ starts at the first and ends at the 40-th observation. So \fct{dtw\_partial} returns the ideal range of `C`\ to be aligned to `Q`. Next we plot the second dimension of partial alignment of the 2-dimensional time series with the standard plotting function. Figure~\ref{fig:dtw_partial}a shows the time series partially aligned according to the \code{rangeQ} and \code{rangeC} until the 40th observation of `C`\ where we simulated the level change of `C`\ by adding 10. Figure~\ref{fig:dtw_partial}b shows the warping path also ending at the 40th index of `C`:
+
+
+```{r fig_test, fig.show='hide'}
+gg1 <- plot(tmp, partial = par, type = "warp", selDim = 2)
+gg2 <- plot(tmp, partial = par, type = "QC", selDim = 2)
+```
+
+
+```{r,  fig.align='center', fig.height=3, fig.width=7}
+grid.arrange(gg1, gg2, nrow = 1)
+```
+
+&nbsp;
+&nbsp;
+<!-- ========================================================================================== -->
+<!-- ========================================================================================== -->
+
+## Open start alignment
+
+<!-- ========================================================================================== -->
+<!-- ========================================================================================== -->
+
+
+@Assent2009 proofed the DTW computation to be reversible  for the step pattern 'symmetric1', so `dtw(Q[1:nq,],C[1:nc,]) = dtw(Q[nq:1,], C[nc:1, ])`. Before we apply this principle for open start alignments, we illustrate it by hand of the following simple example.  
+
+
+
+```{r}
+set.seed(1150)
+Q <- rw(6)
+C <- Q + rnorm(6)
+tmp <- IncDTW::dtw(Q, C, step_pattern = "symmetric1", 
+   return_wp = TRUE, return_QC = TRUE)
+tmpr <- IncDTW::dtw(rev(Q), rev(C), step_pattern = "symmetric1", 
+   return_wp = TRUE, return_QC = TRUE)
+tmp$distance 
+tmpr$distance 
+```
+
+The next figure depicts the warping paths for the time series aligned in the ordinary order (a) and in the reverse order (b). Rotating one warping path for 180 degrees results in the other, which is just because the reverse order of the time series.
+
+```{r, fig.show='hide'}
+gg1 <- plot(tmp, type = "warp")
+gg2 <- plot(tmpr, type = "warp")
+```
+
+
+```{r,  fig.align='center', fig.height=3.5, fig.width=7}
+grid.arrange(gg1, gg2, nrow = 1)
+```
+
+
+Now we can demonstrate the open start alignment by hand of the following two time series which we simulate analogously to the previous example for the open-end alignment, but here we append the noise at the beginning of `C`:
+
+
+```{r}
+set.seed(321)
+Q <- matrix(rw(100), ncol = 2)
+C <- IncDTW::simulate_timewarp(Q, compress = 0.2)
+noise <- matrix(10 + rnorm(30), ncol = 2)
+C <- rbind(noise, C)
+nrow(C)
+```
+
+
+Obviously the initial 15 observations of `C` have no reasonable connection with `Q`. Next we find the best open-start alignment by first getting the full alignment of the reverse time series and use this as input to find the open-start alignment for a partial match of `C`. 
+
+
+```{r}
+rev.matrix <- function(x) x[nrow(x):1, ,drop=FALSE]
+tmp <- IncDTW::idtw2vec(Q = rev(Q), newObs = rev(C))
+par <- dtw_partial(tmp, partial_Q = FALSE, reverse = TRUE)
+par$rangeC
+```
+
+
+
+As for the open-end alignment, `dtw_partial()` also returns the optimal open-start alignment, by setting `reverse = TRUE`.
+
+DTW is not exactly reversible for the step pattern 'symmetric2', since the double weights of the diagonal step relative to the horizontal and vertical step can cause different optimal warping paths, especially initiated at the start and end of the warping paths. 
+We empirically tested the differences of the DTW distances with the step pattern 'symmetric2' for pairs of simulated random walks of lengths ranging from 10 to $10^4$. We calculated DTW for pairs of time series in regular and reverse order, and measured the deviation by the median absolute percentage error (MdAPE). For random walks of length 10 the difference is at a level of 1.4%, drops continuously to 0.1% for random walks of length 100, and 0.01% for 1000.  
+
+Also we tested the influence of the time order on the accuracy of a 1-NN classifier applying the DTW distance measure with the 'symmetric2' step pattern. We downloaded the UCR benchmark time series database @UCRArchive and classified the test time series by the label of the closest match in the training set, both for the regular and reverse time order. Across all data sets for 98.1% the predicted labels of the regular classifier were identical to those of the classifier applied on the tine series in reverse order. The labels were different and wrong for 0.4%, and different and either the regular or the reverse was correct for 0.7%. We conclude that the time order doesn't affect the classification accuracy of this 1-NN classifier applying the DTW distance with step pattern 'symmetric2'.
+
+
+
+
+&nbsp;
+&nbsp;
+<!-- ========================================================================================== -->
+<!-- ========================================================================================== -->
+
+## Open increment
+
+<!-- ========================================================================================== -->
+<!-- ========================================================================================== -->
+
+
+
+Combining the incremental calculation and the partial alignment is also possible since the incremental algorithm returns either the updated global cost matrix (for the matrix based algorithm `idtw()`) or the last column and last row (vetor based `idet2vec()`) for possible future iterations. As a consequence we can update the partial alignment after each incremental step, where `Q` is a query pattern and `C` is recorded at the time of analysis, just like a data stream:
+
+```{r}
+Q <- sin(seq(1, 15, length.out = 200))
+C <- cos(seq(1, 5, length.out = 20))
+tmp0 <- IncDTW::dtw(Q = Q, C = C, return_wp = TRUE, return_QC = TRUE)
+par0 <- dtw_partial(tmp0, partial_Q = TRUE, partial_C = FALSE)
+
+```
+
+
+With new observations of `C` we can easily update the partial matching:
+
+```{r}
+newObs <- cos(seq(5, 10, length.out = 20))
+tmp1 <- idtw(Q = Q, C = C, newObs = newObs, gcm = tmp0$gcm, dm = tmp0$dm, return_QC = TRUE)
+par1 <- dtw_partial(tmp1, partial_Q = TRUE, partial_C = FALSE)
+```
+
+```{r, fig.show='hide'}
+gg0 <- plot(tmp0, type = "warp", partial = par0)
+gg1 <- plot(tmp1, type = "warp", partial = par1)
+```
+
+
+```{r,  fig.align='center', fig.height=3.5, fig.width=7}
+grid.arrange(gg0, gg1, nrow = 1)
+```
+
+
+&nbsp;
+&nbsp;
+<!-- ========================================================================================== -->
+<!-- ========================================================================================== -->
+
+## References
+
+<!-- ========================================================================================== -->
+<!-- ========================================================================================== -->

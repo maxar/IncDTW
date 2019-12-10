@@ -1,17 +1,20 @@
-### Version 1.1.2.01
+### Version 1.1.2.03 (in dev)
 
 ##### Bug Fixes
 
 - if parameter ws = Inf then R breaks. A new check function checks if ws = Inf and if TRUE, then ws is set to NULL, which is equivalent to the meaning of Inf.
-- norm() returned NaN if the standrad deviation was 0. Now there is a check if the sd is smaller than the parameter threshold (default = 1e-5). If the sd is smaller than the threshold, then no scaling is performed, only shifting. Analogous is implemented for min-max normalization. Also for rundtw().
+- scale() returned NaN if the standrad deviation was 0. Now there is a check if the sd is smaller than the parameter threshold (default = 1e-5). If the sd is smaller than the threshold, then no scaling is performed, only shifting. Analogous it's implemented for min-max scaling. Also for rundtw().
 
 ##### New Features
 
-- 
+- New Vignettes
+- replaced the function norm() by scale(), same functionality. norm() still works, but prints a warning to be deprecated.
+- replaced the arguments 'normalize' by 'scale' for the function rundtw(). See details of the function documentation.
 
 ##### other changes
 
-- 
+- Changed the name of the data set "Walk" to "walk"
+- For clarification I replaced 'norm' by 'scale' in the context of z-scaling and min-max-scaling (z-normalization and min-max-normalization). From now on the terminology should be clearer seperated from normalizing the DTW distance for the length of the time series.
 
 ### Version 1.1.2
 

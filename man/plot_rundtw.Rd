@@ -9,8 +9,8 @@ Plot
 Plot the results from \code{\link{rundtw}}.}
 \usage{
 \method{plot}{rundtw}(x, knn = TRUE, minima = TRUE, 
-     normalize = c("none", "01", "z"), 
-     selDim = 1, lix = 1, Q = NULL, C = NULL, ...)
+     scale = c("none", "01", "z"), 
+     selDim = 1, lix = 1, Q = NULL, C = NULL, normalize = c("none", "01", "z"),  ...)
 
 }
 %- maybe also 'usage' for other objects documented here.
@@ -24,7 +24,7 @@ Plot the results from \code{\link{rundtw}}.}
 \item{minima}{
 logical, if TRUE ( = default) and \code{Q} is either passed or also returned by \code{\link{rundtw}} then the local (with window size of the lengh of \code{Q}) minima of the vector of distances is plotted. See details. 
 }
-\item{normalize}{
+\item{scale}{
 character, one of c("none", "01", "z"). If "01" or "z" then the detected minima and knn are normed and plotted.
 }
 \item{selDim}{
@@ -38,6 +38,8 @@ time series, default = NULL, either passed as list entry of \code{x} (when the p
 }
 \item{C}{
 time series, default = NULL, either passed as list entry of \code{x} (when the parameter \code{return_QC} or \code{\link{rundtw}} is set to TRUE) or passed manually. Necessary for plotting the minima and knn.
+}
+\item{normalize}{deprecated, use \code{scale} instead. If \code{normalize} is set, then \code{scale} is overwritten by \code{normalize} for compatibility.
 }
 \item{...}{
 additional arguments passed to ggplot()}
@@ -70,13 +72,13 @@ ret
 plot(ret)
 
 # Get 1 nearest neighbor -> allow early abandon and lower bounding,
-# and plot C and also plot the normalized detected nearest neighbors
+# and plot C and also plot the scaled detected nearest neighbors
 ret <- rundtw(Q, C, ws = 5, k = 1, return_QC = TRUE)
 ret
-plot(ret, normalize = "01")
+plot(ret, scale = "01")
 
 
-#--- Also see examples or rundtw
+#--- See the help page of rundtw() for further examples.
 
 }
 

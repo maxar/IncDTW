@@ -16,6 +16,7 @@ export(idtw)
 export(dec_dm)
 
 export(norm)
+export(scale)
 export(dtw_dismat)
 export(dtw_disvec)
 export(DBA)

@@ -1,7 +1,7 @@
-context("normalizing time series")
+context("scaling time series")
 
 
-test_that("test norm with zero variance", {
+test_that("test scale with zero variance", {
    #skip("blabla")
    x <- rep(rnorm(1), 100)
    
@@ -9,18 +9,18 @@ test_that("test norm with zero variance", {
    f01 <- function(x){  (x-min(x)) }
    
    
-   ist <- norm(x, type = "z")
+   ist <- scale(x, type = "z")
    soll <- fz(x)
    expect_equal(ist, soll)
    
-   ist <- norm(x, type = "01")
+   ist <- scale(x, type = "01")
    soll <- f01(x)
    expect_equal(ist, soll)
 
 })
 
 
-test_that("test norm with low variance", {
+test_that("test scale with low variance", {
    #skip("blabla")
    x <- rep(rnorm(1)/10^6, 100)
    x[1] <- x[1] * 2
@@ -29,18 +29,18 @@ test_that("test norm with low variance", {
    f01 <- function(x){  (x-min(x))/(max(x)-min(x)) }
    
    
-   ist <- norm(x, type = "z", threshold = 1e-12)
+   ist <- scale(x, type = "z", threshold = 1e-12)
    soll <- fz(x)
    expect_equal(ist, soll)
    
-   ist <- norm(x, type = "01", threshold = 1e-12)
+   ist <- scale(x, type = "01", threshold = 1e-12)
    soll <- f01(x)
    expect_equal(ist, soll)
   
 })
 
 
-test_that("test znorm", {
+test_that("test zscale", {
    #skip("blabla")
    eps <- 1/10^7
    x <- rnorm(100, sample(100,1), sample(10,1))
@@ -50,13 +50,13 @@ test_that("test znorm", {
    
    mm <- rnorm(1)
    ss <- abs(rnorm(1))
-   expect_equal(max(abs(f0(x) - norm(x, type = "z"))) < eps, TRUE)
+   expect_equal(max(abs(f0(x) - scale(x, type = "z"))) < eps, TRUE)
    expect_equal(max(abs(f1(x, mu0 = mm, sd0 = ss) - 
-                        norm(x, type = "z", xmean = mm, xsd = ss))) < eps, TRUE)
+                        scale(x, type = "z", xmean = mm, xsd = ss))) < eps, TRUE)
    expect_equal(max(abs(f0(x) - 
-                        norm(x, type = "z", xmean = mean(x)))) < eps, TRUE)
+                        scale(x, type = "z", xmean = mean(x)))) < eps, TRUE)
    expect_equal(max(abs(f0(x) - 
-                        norm(x, type = "z", xsd = sd(x)))) < eps, TRUE)
+                        scale(x, type = "z", xsd = sd(x)))) < eps, TRUE)
    
    
 })
@@ -81,7 +81,7 @@ test_that("test znorm speed", {
 
 
 
-test_that("test norm01", {
+test_that("test scale01", {
    #skip("blabla")
    eps <- 1/10^7
    x <- rnorm(100, sample(100,1), sample(10,1))
@@ -91,19 +91,19 @@ test_that("test norm01", {
    mmi <- rnorm(1)
    mma <- mmi + abs(rnorm(1))
    
-   expect_equal(max(abs(f0(x) - norm(x, type = "01"))) < eps, TRUE)
+   expect_equal(max(abs(f0(x) - scale(x, type = "01"))) < eps, TRUE)
    expect_equal(max(abs(f1(x, mi = mmi, ma = mma) - 
-                           norm(x, type = "01", xmax = mma, xmin = mmi))) < eps, TRUE)
+                           scale(x, type = "01", xmax = mma, xmin = mmi))) < eps, TRUE)
    expect_equal(max(abs(f0(x) - 
-                        norm(x, type = "01", xmax = max(x)))) < eps, TRUE)
+                        scale(x, type = "01", xmax = max(x)))) < eps, TRUE)
    expect_equal(max(abs(f0(x) - 
-                           norm(x, type = "01", xmin = min(x)))) < eps, TRUE)
+                           scale(x, type = "01", xmin = min(x)))) < eps, TRUE)
    
 })
 
 
 
-test_that("test norm01 speed", {
+test_that("test scale01 speed", {
    skip("speed comparison")
    
    x <- rnorm(10^4, sample(100,1), sample(10,1))

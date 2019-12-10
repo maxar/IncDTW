@@ -36,7 +36,7 @@ is.idtw(x)
 \item{C}{
 Candidate time series. C needs to be one of the following: (1) a one dimensional vector, (2) a matrix where each row is one observations and each column is one dimension of the time series, or (3) if Q is a matrix of differences or costs C needs to be the respective character string 'diffM' or 'cm'.
 }
-\item{dist_method}{character, describes the method of distance measure for multivariate time series (this parameter is ignored for univariate time series). Currently supported methods are 'norm1' (default, is the Manhattan distance), 'norm2' (is the Euclidean distance) and 'norm2_square' For the function \code{cm()} the parameter \code{dist_method} can also be a user defined distance function. 
+\item{dist_method}{character, describes the method of distance measure for multivariate time series (this parameter is ignored for univariate time series). Currently supported methods are 'norm1' (default, is the Manhattan distance), 'norm2' (is the Euclidean distance) and 'norm2_square'. For the function \code{cm()} the parameter \code{dist_method} can also be a user defined distance function (see details and examples).
 }
 \item{step_pattern}{character, describes the step pattern. Currently implemented are the patterns \code{symmetric1} and \code{symmetric2}, see details.
 }
@@ -71,17 +71,19 @@ passed to \code{round} and \code{print}
 }
 
 }
+
+
 \details{
 The dynamic time warping distance is the element in the last row and last column of the global cost matrix. 
 
 For the multivariate case where Q is a matrix of n rows and k columns and C is a matrix of m rows and k columns
 the dist_method parameter defines the following distance measures: 
 
- norm1: \deqn{dist(Q_{i,.}, C_{j,.}) = \sum_{l = 1}^k |Q_{i,l} - C_{j,l}|}
+ norm1: \deqn{dist(Q_{i,.}, C_{j,.}) = \sum {l = 1:k}  |Q_{i,l} - C_{j,l}|}
 
- norm2: \deqn{dist(Q_{i,.}, C_{j,.}) = \sqrt{\sum_{l = 1}^k (Q_{i,l} - C_{j,l})^2}}
+ norm2: \deqn{dist(Q_{i,.}, C_{j,.}) = (\sum {l = 1:k} (Q_{i,l} - C_{j,l})^2)^0.5}
  
- norm2_square: \deqn{dist(Q_{i,.}, C_{j,.}) = \sum_{l = 1}^k (Q_{i,l} - C_{j,l})^2}
+ norm2_square: \deqn{dist(Q_{i,.}, C_{j,.}) = \sum{l = 1:k} (Q_{i,l} - C_{j,l})^2}
  
 
 The parameter \code{step_pattern} describes how the two time series are aligned. 
@@ -91,6 +93,18 @@ If \code{step_pattern == "symmetric2"} then  \deqn{gcm_{i,j} = cm{i,j} + min(gcm
  
 
 To make DTW distances comparable for many time series of different lengths use the \code{normlized_distance} with the setting \code{step_method = 'symmetric2'}. Please find a more detailed discussion and further references here: \url{http://dtw.r-forge.r-project.org/}.
+
+
+User defined distance function:
+To calculate the DTW distance measure of two time series a distance function for the local distance of two observations \code{Q[i, ]} and \code{C[j, ]} of the time series \code{Q} and \code{C} has to be selected. The predefined distance function are 'norm1', 'norm2' and 'norm2-square'. It is also possible to define a customized distance function and use the cost matrix \code{cm} as input for the DTW algorithm, also for the incremental functions. In the following experiment we apply the cosine distance as local distance function:
+
+\deqn{
+ d_cos(C_i, Q_j) = 1 - (\sum{o=1:O} Q_{io} * C_{jo})/ ((\sum{o=1:O} Q_{io}^2)^0.5 * (\sum{o=1:O} C_{jo}^2)^0.5).
+}
+
+
+
+
 
 }
 
@@ -149,6 +163,28 @@ dtw_cm$diffM
 Q <- matrix(rnorm(100), ncol=2)
 C <- matrix(rnorm(80), ncol=2)
 dtw(Q = Q, C = C, ws = 30, dist_method = "norm2")
+
+
+#--- user defined distance function
+# We define the distance function d_cos and use it as input for the cost matrix function cm. 
+# We can pass the output from cm() to dtw2vec(), and also to idtw2vec() for the 
+# incrermental calculation:
+
+d_cos <- function(x, y){ 
+  1 - sum(x * y)/(sqrt(sum(x^2)) * sqrt(sum(y^2)))
+}
+
+Q <- matrix(rnorm(100), ncol=5, nrow=20)
+C <- matrix(rnorm(150), ncol=5, nrow=30)
+cm1 <- cm(Q, C, dist_method = d_cos)
+dtw2vec(Q = cm1, C = "cm")$distance
+
+res0 <- idtw2vec(Q = cm1[ ,1:20], newObs =  "cm")
+idtw2vec(Q = cm1[ ,21:30], newObs =  "cm", gcm_lc = res0$gcm_lc_new)$distance
+
+# The DTW distances -- based on the customized distance function -- of the 
+# incremental calculation and the one from scratch are identical.
+
 
 }
 \keyword{ cluster }% use one of  RShowDoc("KEYWORDS")

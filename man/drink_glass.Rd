@@ -1,6 +1,6 @@
 \name{drink_glass}
 \alias{drink_glass}
-\alias{Walk}
+\alias{walk}
 \alias{brush_teeth}
 \docType{data}
 \title{
@@ -16,7 +16,7 @@ Accelerometer: drink a glass, walk, brush teeth.
   
 }
 \details{
-list of 3-dimensional time series stored as matrix. The data is recorded with 32Hz. The data is z-normalized.
+list of 3-dimensional time series stored as matrix. The data is recorded with 32Hz. The data is z-scaled (z-normalized).
 
 }
 \source{
@@ -32,11 +32,11 @@ length(drink_glass)
 dim(drink_glass[[1]])
 matplot(drink_glass[[1]], type="l")
 
-data(Walk)
-class(Walk)
-length(Walk)
-dim(Walk[[1]])
-matplot(Walk[[1]], type="l")
+data(walk)
+class(walk)
+length(walk)
+dim(walk[[1]])
+matplot(walk[[1]], type="l")
 
 data(brush_teeth)
 class(brush_teeth)

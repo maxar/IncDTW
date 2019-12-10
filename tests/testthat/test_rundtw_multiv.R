@@ -3,15 +3,15 @@ context("test running dtw")
 goal <- function(h, x, ws, dm, sp){
    nx <- nrow(x)
    nh <- nrow(h)
-   hnorm <- IncDTW::norm(h, type = "01")
+   hscale <- IncDTW::scale(h, type = "01")
    sapply(1:(nx-nh+1), function(i){
-      y <- IncDTW::norm(x[i:(i+nh-1), , drop = F], type = "01")
-      IncDTW::dtw2vec(y, hnorm, dist_method = dm,
+      y <- IncDTW::scale(x[i:(i+nh-1), , drop = F], type = "01")
+      IncDTW::dtw2vec(y, hscale, dist_method = dm,
                       step_pattern = sp, ws = ws)$dist
    })
 }
 
-goal_nonorm <- function(h, x, ws, dm, sp){
+goal_noscale <- function(h, x, ws, dm, sp){
    nx <- nrow(x)
    nh <- nrow(h)
    sapply(1:(nx-nh+1), function(i){
@@ -33,17 +33,17 @@ test_that("correct multivariate norm1", {
    h <- noise(10, nc)
    x <- rbind(noise(10, nc), h, noise(10, nc))
    
-   # DO norm
+   # DO scale
    ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "01", threshold = NULL, lower_bound = F)
+                 ws = WS, scale = "01", threshold = NULL, lower_bound = F)
    soll <- goal(h, x, WS, dm, sp)
    
    expect_equal(ist$dist, soll)
    
-   # DONT norm
+   # DONT scale
    ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "none", threshold = NULL, lower_bound = F)
-   soll <- goal_nonorm(h, x, WS, dm, sp)
+                 ws = WS, scale = "none", threshold = NULL, lower_bound = F)
+   soll <- goal_noscale(h, x, WS, dm, sp)
    
    expect_equal(ist$dist, soll)
    
@@ -58,20 +58,20 @@ test_that("correct multivariate norm2", {
    WS <- NULL
 
    h <- noise(10, nc)
-   hnorm <- IncDTW::norm(h, type="01")
+   hscale <- IncDTW::scale(h, type="01")
    x <- rbind(noise(10, nc), h, noise(10, nc))
    
-   # DO norm
+   # DO scale
    ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "01", threshold = NULL, lower_bound = F)
+                 ws = WS, scale = "01", threshold = NULL, lower_bound = F)
    soll <- goal(h, x, WS, dm, sp)
    
    expect_equal(ist$dist, soll)
    
-   # DONT norm
+   # DONT scale
    ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "none", threshold = NULL, lower_bound = F)
-   soll <- goal_nonorm(h, x, WS, dm, sp)
+                 ws = WS, scale = "none", threshold = NULL, lower_bound = F)
+   soll <- goal_noscale(h, x, WS, dm, sp)
    
    expect_equal(ist$dist, soll)
    
@@ -87,20 +87,20 @@ test_that("correct multivariate sym2", {
    WS <- 100
    
    h <- noise(10, nc)
-   hnorm <- IncDTW::norm(h, type="01")
+   hscale <- IncDTW::scale(h, type="01")
    x <- rbind(noise(10, nc), h, noise(10, nc))
    
-   # DO norm
+   # DO scale
    ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "01", threshold = NULL, lower_bound = F)
+                 ws = WS, scale = "01", threshold = NULL, lower_bound = F)
    soll <- goal(h, x, WS, dm, sp)
    
    expect_equal(ist$dist, soll)
    
-   # DONT norm
+   # DONT scale
    ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, 
-                 ws = WS, normalize = "none", threshold = NULL, lower_bound = F)
-   soll <- goal_nonorm(h, x, WS, dm, sp)
+                 ws = WS, scale = "none", threshold = NULL, lower_bound = F)
+   soll <- goal_noscale(h, x, WS, dm, sp)
    
    expect_equal(ist$dist, soll)
    
@@ -120,7 +120,7 @@ test_that("expected result, multivariate", {
    soll <- c(11, 31, 51)
    
    # DONT lowerbound
-   ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, normalize = "01",
+   ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, scale = "01",
                  threshold = NULL, lower_bound = FALSE)
    ist <- which(ist$dist < 10^(-10))
    
@@ -128,7 +128,7 @@ test_that("expected result, multivariate", {
    
    
    # DO lowerbound
-   ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, normalize = "01",
+   ist <- rundtw(Q = h, C = x, dist_method = dm, step_pattern = sp, scale = "01",
                  threshold = NULL, lower_bound = TRUE)
    ist <- which(ist$dist < 10^(-10))
    
@@ -143,9 +143,9 @@ test_that("kNN rundtw", {
    sp <- "symmetric1"
    WS <- NULL
    nc <- 3
-   goal_knn <- function(hnorm, x, sp, ws = 10, kNNk){
+   goal_knn <- function(hscale, x, sp, ws = 10, kNNk){
       allv <- rundtw(h, x, dist_method = dm, step_pattern = sp, ws = 10, 
-                     threshold = NULL, k = 0, lower_bound = FALSE, normalize = "01")
+                     threshold = NULL, k = 0, lower_bound = FALSE, scale = "01")
       dd <- allv$dist
       best_i <- integer()
       for(i in 1:kNNk){
@@ -167,23 +167,23 @@ test_that("kNN rundtw", {
    nn <- nn/nfits
    
    h <- noise(nh, nc)
-   hnorm <- IncDTW::norm( h , type="01")
+   hscale <- IncDTW::scale( h , type="01")
    x <- noise(0,nc)
    for(i in 1:nfits){
       x <- rbind(x, noise(nn, nc), h)
    }
    
-   # rundtw(hnorm, x,dm,  sp, k = 5, ws = 10, threshold = Inf,1,1,1)# DO norm
-   # cpp_rundtw(hnorm, x, sp, ws = 10, threshold = Inf, kNNk = 10, do_norm = 1, use_ea = 1, use_lb = 1)
+   # rundtw(hscale, x,dm,  sp, k = 5, ws = 10, threshold = Inf,1,1,1)# DO scale
+   # cpp_rundtw(hscale, x, sp, ws = 10, threshold = Inf, kNNk = 10, do_norm = 1, use_ea = 1, use_lb = 1)
    
    k <- nfits + 2
    
    
    tmp <- rundtw(h, x, dist_method = dm, step_pattern = sp, ws = 10, threshold = Inf, k = k,
-                 lower_bound = TRUE, normalize = "01")
+                 lower_bound = TRUE, scale = "01")
    ist <- sort(tmp$knn_indices)
    
-   soll <- sort( goal_knn(hnorm, x, sp, ws=10, kNNk = k) )
+   soll <- sort( goal_knn(hscale, x, sp, ws=10, kNNk = k) )
    
    
    expect_equal(ist, soll)
@@ -203,22 +203,22 @@ test_that("run time multiv", {
    # deform <- function(x) (x + rnorm(1, 0, 100)) * abs(rnorm(1, 0, 100))
    
    # speed comparison
-   foo_2vec <- function(hnorm, x, ws){
-      nh <- nrow(hnorm)
+   foo_2vec <- function(hscale, x, ws){
+      nh <- nrow(hscale)
       nx <- nrow(x)
       sapply(1:(nx-nh+1), function(i){
-         y <- IncDTW::norm(x[i:(i+nh-1), , drop=F], type = "01")
-         IncDTW::dtw2vec(y, hnorm, dist_method = dm,
+         y <- IncDTW::scale(x[i:(i+nh-1), , drop=F], type = "01")
+         IncDTW::dtw2vec(y, hscale, dist_method = dm,
                          step_pattern = sp, ws = ws)$dist
       })
    }
    
-   foo_cm <- function(hnorm, x, ws){
-      nh <- nrow(hnorm)
+   foo_cm <- function(hscale, x, ws){
+      nh <- nrow(hscale)
       nx <- nrow(x)
       sapply(1:(nx-nh+1), function(i){
-         y <- IncDTW::norm(x[i:(i+nh-1), , drop=F], type = "01")
-         cm_tmp <- IncDTW::cm(y, hnorm, dist_method = dm, ws = ws)
+         y <- IncDTW::scale(x[i:(i+nh-1), , drop=F], type = "01")
+         cm_tmp <- IncDTW::cm(y, hscale, dist_method = dm, ws = ws)
          IncDTW::dtw2vec(cm_tmp, C = "cm", step_pattern = sp, ws = ws)$dist
       })
    }
@@ -265,7 +265,7 @@ test_that("run time multiv", {
             nn <- nn/nfits
             
             h <- noise(nh, nc)
-            hnorm <- IncDTW::norm( h , type="01")
+            hscale <- IncDTW::scale( h , type="01")
             x <- matrix(numeric(), ncol=nc)
             for(i in 1:nfits){
                x <- rbind(x, noise(nn, nc), h)
@@ -273,16 +273,16 @@ test_that("run time multiv", {
             
             
             
-            mic <- microbenchmark::microbenchmark(foo_cm(hnorm, x, WS),
-                                                  foo_2vec(hnorm, x, WS),
-                                                  rundtw(hnorm, x, dm, sp, "01", WS, NULL),
-                                                  rundtw(hnorm, x, dm, sp, "01", WS, Inf),
-                                                  rundtw(hnorm, x, dm, sp, "none", WS, NULL),
-                                                  rundtw(hnorm, x, dm, sp, "none", WS, Inf),
+            mic <- microbenchmark::microbenchmark(foo_cm(hscale, x, WS),
+                                                  foo_2vec(hscale, x, WS),
+                                                  rundtw(hscale, x, dm, sp, "01", WS, NULL),
+                                                  rundtw(hscale, x, dm, sp, "01", WS, Inf),
+                                                  rundtw(hscale, x, dm, sp, "none", WS, NULL),
+                                                  rundtw(hscale, x, dm, sp, "none", WS, Inf),
                                                   times = 10)
             df0 <- maxaR::rel_microbenchmark(mic, 
                                              cols = c("expr", "min", "mean", "median", "max", "neval"), 
-                                             rel_expr = "rundtw(hnorm, x, dm, sp, T, WS, Inf)")$df
+                                             rel_expr = "rundtw(hscale, x, dm, sp, T, WS, Inf)")$df
             df0$nh <- nh
             df0$nx <- nx
             df0$nfits <- nfits

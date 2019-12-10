@@ -226,7 +226,7 @@ trunc_sample <- function (N, a, b, prob, plist = NULL) {
    y[y > qmax] <- qmax
    y[y < qmin] <- qmin
    
-   # min-max normalization and
+   # min-max scaling and
    # shift to appreciated interval
    return(round((y - qmin )/( qmax - qmin) * (b-a) + a))
 }

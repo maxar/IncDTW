@@ -1,8 +1,14 @@
 
 plot.rundtw <- function(x, knn = TRUE, minima = TRUE, 
-                        normalize = c("none", "01", "z"), 
-                        selDim = 1, lix = 1, Q = NULL, C = NULL, ...){
-                        
+                        scale = c("none", "01", "z"),  
+                        selDim = 1, lix = 1, Q = NULL, C = NULL, normalize = c("none", "01", "z"), ...){
+
+   if (!missing("normalize")){
+      warning("Argument 'normalize' is deprecated, use 'scale' instead. 
+              The parameter 'scale' is set equal the parameter 'normalize'.")
+      scale <- normalize
+   }
+   
    if(is.list(x$dist)){
       
       x$dist <- x$dist[[lix]]
@@ -17,7 +23,7 @@ plot.rundtw <- function(x, knn = TRUE, minima = TRUE,
       if(!is.null(x$C)) x$C <- x$C[[lix]]
       
       return(
-         plot(x, knn = knn, minima = minima, normalize = normalize, 
+         plot(x, knn = knn, minima = minima, scale = scale, 
               selDim = selDim, lix = 1, Q = Q, C = C)
       )
       
@@ -36,7 +42,7 @@ plot.rundtw <- function(x, knn = TRUE, minima = TRUE,
    if(is.null(C) & !is.null(x$C)) C <- x$C
    group <- fct <- x_time <- y_value <- categ <- NULL
    
-   normalize <- match.arg(normalize)
+   scale <- match.arg(scale, c("none", "01", "z"))
    
    dfp1 <- data.frame(x_time = 1:length(x$dist),
                       y_value = x$dist,
@@ -116,14 +122,14 @@ plot.rundtw <- function(x, knn = TRUE, minima = TRUE,
       dfp <- rbind(dfp1[, list(x_time, y_value, group, categ, fct)],
                    dfp2[, list(x_time, y_value, group, categ, fct)])
       
-      if(normalize != "none"){
+      if(scale != "none"){
          dfp3 <- dfp2
-         dfp3[,fct:= "Normed fits"]
+         dfp3[,fct:= "Scaled fits"]
          dfp3[categ == "C, no fit", y_value:= NA]
          if(minima & !is.null(Q)){
             for(mm in ix_minima){
                dfp3[x_time >= mm & x_time <= (mm + nQ -1) & categ == "minimum", 
-                    y_value:= IncDTW::norm(.SD[, y_value], normalize), by = "group"]       
+                    y_value:= IncDTW::scale(.SD[, y_value], scale), by = "group"]       
             }
          }
          
@@ -131,7 +137,7 @@ plot.rundtw <- function(x, knn = TRUE, minima = TRUE,
          if(knn & !is.null(Q)){
             for(ix_knn in x$knn_indices){
                dfp3[x_time >= ix_knn & x_time <= (ix_knn + nQ -1) & categ == "kNN", 
-                    y_value:= IncDTW::norm(.SD[, y_value], normalize), by = "group"]       
+                    y_value:= IncDTW::scale(.SD[, y_value], scale), by = "group"]       
             }
          }
          
