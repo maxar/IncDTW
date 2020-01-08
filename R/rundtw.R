@@ -434,3 +434,71 @@ find_peaks <- function (x, w, get_min = TRUE, strict = TRUE){
    }
 }
 
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+lowerbound_tube <- function(Q, ws, scale = c("z", "01", "none")){
+   
+   scale <- match.arg(scale)
+   if(scale != "none"){
+      Q <- IncDTW::scale(Q, type = scale)
+   }
+   
+   if(is.matrix(Q)){
+      # stop("not implemented yet")
+      return(cpp_get_tube_mv(Q, ws))
+   }else{
+      return(cpp_get_tube(Q, ws))   
+   }
+}
+
+
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+lowerbound <- function(C, ws, scale = c("z", "01", "none"),
+                     dist_method = c("norm1", "norm2", "norm2_square"), 
+                     Q = NULL, tube = NULL){
+   
+   if(is.null(Q) & is.null(tube)){
+      stop("Either Q or tube must not be NULL")
+   }
+   
+   dist_method <- match.arg(dist_method)
+   scale <- match.arg(scale)
+   
+   # if(scale == "01"){
+   #    warning("currently only for scale == 'z' implemented")
+   # }
+   
+   if(is.null(tube)){
+      if(scale != "none") Q <- IncDTW::scale(Q, type = scale)
+      tube <- lowerbound_tube(Q, ws)
+   }
+   
+   if(scale != "none"){
+      C <- IncDTW::scale(C, type = scale)
+   }
+   
+   # adjust the lb functions for other scaling method '01'
+   if(is.matrix(C)){
+      if(dist_method == "norm1"){
+         lb <- get_lb_mv1(tube, C, 0, nrow(C), ncol(C))   
+      
+      }else if(dist_method == "norm2"){
+         lb <- get_lb_mv2(tube, C, 0, nrow(C), ncol(C))
+         
+      }else if(dist_method == "norm2_square"){
+         lb <- get_lb_mv22(tube, C, 0, nrow(C), ncol(C))
+      
+      }
+   }else{
+      lb <- get_lb(tube, C, 0, length(C))
+   }
+   
+   return(lb)
+}

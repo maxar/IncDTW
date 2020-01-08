@@ -71,6 +71,7 @@ double get_lb_znorm(const NumericMatrix &tube, const NumericVector &x,
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
+// [[Rcpp::export]]
 double get_lb_mv1(const NumericMatrix &tube, const NumericMatrix &x, 
                   int j0, int jsup, int nc){
    double lb = 0;
@@ -97,6 +98,7 @@ double get_lb_mv1(const NumericMatrix &tube, const NumericMatrix &x,
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
+// [[Rcpp::export]]
 double get_lb_mv2(const NumericMatrix &tube, const NumericMatrix &x, 
                   int j0, int jsup, int nc){
    double lb = 0;
@@ -127,6 +129,7 @@ double get_lb_mv2(const NumericMatrix &tube, const NumericMatrix &x,
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
+// [[Rcpp::export]]
 double get_lb_mv22(const NumericMatrix &tube, const NumericMatrix &x, 
                    int j0, int jsup, int nc){
    double lb = 0;
@@ -634,7 +637,6 @@ void cpp_set_tube(NumericMatrix &tube, const NumericVector &h, int ws){
 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-// [[Rcpp::export]]
 void cpp_set_tube_mv(NumericMatrix &tube, const NumericMatrix &h, int ws){
    // LU ... matrix of the dimension nx h 2*nc
    int c,i, j, j0, j1;
@@ -670,6 +672,44 @@ void cpp_set_tube_mv(NumericMatrix &tube, const NumericMatrix &h, int ws){
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
+
+
+// [[Rcpp::export]]
+NumericMatrix cpp_get_tube_mv(const NumericMatrix &h, int ws){
+   // LU ... matrix of the dimension nx h 2*nc
+   int c,i, j, j0, j1;
+   int nh = h.nrow();
+   int nc = h.ncol();
+   double tmp_min;
+   double tmp_max;
+   // NumericMatrix range(nh, 2*nc);
+   NumericMatrix tube(nh, 2*nc); 
+   
+   for(i = 0; i < nh; i++){
+      j0 = max(0, i - ws);
+      j1 = min(nh, i + ws);
+      
+      for(c = 0; c < nc; c++){
+         tmp_min = h(j0,c);
+         tmp_max = h(j0,c);
+         for(j = j0+1; j < j1; j++){
+            if(h(j, c) < tmp_min ){
+               tmp_min = h(j, c);
+            }
+            if(h(j, c) > tmp_max ){
+               tmp_max = h(j, c);
+            }
+         }
+         tube(i,2*c)   = tmp_min;
+         tube(i,2*c+1) = tmp_max;
+      }
+   }
+   return tube;
+}
+
+
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 double get_mean(const NumericVector &x, int i0, int imax){
    double mu = 0;

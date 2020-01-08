@@ -133,6 +133,18 @@ get_lb_znorm <- function(tube, x, mu, sigma, threshold, j0, jsup) {
     .Call(`_IncDTW_get_lb_znorm`, tube, x, mu, sigma, threshold, j0, jsup)
 }
 
+get_lb_mv1 <- function(tube, x, j0, jsup, nc) {
+    .Call(`_IncDTW_get_lb_mv1`, tube, x, j0, jsup, nc)
+}
+
+get_lb_mv2 <- function(tube, x, j0, jsup, nc) {
+    .Call(`_IncDTW_get_lb_mv2`, tube, x, j0, jsup, nc)
+}
+
+get_lb_mv22 <- function(tube, x, j0, jsup, nc) {
+    .Call(`_IncDTW_get_lb_mv22`, tube, x, j0, jsup, nc)
+}
+
 cpp_get_tube <- function(h, ws) {
     .Call(`_IncDTW_cpp_get_tube`, h, ws)
 }
@@ -141,8 +153,8 @@ cpp_set_tube <- function(tube, h, ws) {
     invisible(.Call(`_IncDTW_cpp_set_tube`, tube, h, ws))
 }
 
-cpp_set_tube_mv <- function(tube, h, ws) {
-    invisible(.Call(`_IncDTW_cpp_set_tube_mv`, tube, h, ws))
+cpp_get_tube_mv <- function(h, ws) {
+    .Call(`_IncDTW_cpp_get_tube_mv`, h, ws)
 }
 
 cpp_kNN_rev <- function(disvec, w, debug = 0L) {

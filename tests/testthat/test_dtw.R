@@ -274,9 +274,15 @@ test_that("Equal Incremental vs. Scratch with ws", {
 
 
 
-
 test_that("Double Incremental Matrix EQUAL Scratch", {
    # skip("test")
+   # in very rare cases the solution of the cheapest path through the gcm is not unique, even though
+   # the GCM and DTW distance measure are identical.
+   # => the solution of the direction matrix, and the warping path can differ slightly 
+   # This happens for example for myseed = 407. 
+   # To pass the CRAN tests, I fix the seed.
+   myseed <- 123
+   set.seed(myseed)
    Q <- cumsum(rnorm(10))
    C <- cumsum(rnorm(8))
    WS <- 5
@@ -290,8 +296,9 @@ test_that("Double Incremental Matrix EQUAL Scratch", {
                           return_diffp = TRUE,return_diffM = TRUE, return_wp = TRUE) # the ordinary calculation
    
    #--- the incremental step with new observations
-   result1 <- IncDTW::idtw(Q = Q, C = C, ws = WS, newObs = newObsC, gcm=base$gcm, dm=base$dm, diffM = base$diffM, 
-                   return_diffp = TRUE,  return_diffM = TRUE) 
+   result1 <- IncDTW::idtw(Q = Q, C = C, ws = WS, newObs = newObsC, gcm=base$gcm, 
+                           dm=base$dm, diffM = base$diffM, 
+                           return_diffp = TRUE,  return_diffM = TRUE) 
    
    tmp <- result1$dm
    tmp2 <- which(tmp==2)

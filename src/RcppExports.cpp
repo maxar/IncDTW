@@ -476,6 +476,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// get_lb_mv1
+double get_lb_mv1(const NumericMatrix& tube, const NumericMatrix& x, int j0, int jsup, int nc);
+RcppExport SEXP _IncDTW_get_lb_mv1(SEXP tubeSEXP, SEXP xSEXP, SEXP j0SEXP, SEXP jsupSEXP, SEXP ncSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type tube(tubeSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type j0(j0SEXP);
+    Rcpp::traits::input_parameter< int >::type jsup(jsupSEXP);
+    Rcpp::traits::input_parameter< int >::type nc(ncSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_lb_mv1(tube, x, j0, jsup, nc));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_lb_mv2
+double get_lb_mv2(const NumericMatrix& tube, const NumericMatrix& x, int j0, int jsup, int nc);
+RcppExport SEXP _IncDTW_get_lb_mv2(SEXP tubeSEXP, SEXP xSEXP, SEXP j0SEXP, SEXP jsupSEXP, SEXP ncSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type tube(tubeSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type j0(j0SEXP);
+    Rcpp::traits::input_parameter< int >::type jsup(jsupSEXP);
+    Rcpp::traits::input_parameter< int >::type nc(ncSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_lb_mv2(tube, x, j0, jsup, nc));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_lb_mv22
+double get_lb_mv22(const NumericMatrix& tube, const NumericMatrix& x, int j0, int jsup, int nc);
+RcppExport SEXP _IncDTW_get_lb_mv22(SEXP tubeSEXP, SEXP xSEXP, SEXP j0SEXP, SEXP jsupSEXP, SEXP ncSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type tube(tubeSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type j0(j0SEXP);
+    Rcpp::traits::input_parameter< int >::type jsup(jsupSEXP);
+    Rcpp::traits::input_parameter< int >::type nc(ncSEXP);
+    rcpp_result_gen = Rcpp::wrap(get_lb_mv22(tube, x, j0, jsup, nc));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_get_tube
 NumericMatrix cpp_get_tube(const NumericVector& h, int ws);
 RcppExport SEXP _IncDTW_cpp_get_tube(SEXP hSEXP, SEXP wsSEXP) {
@@ -500,16 +545,16 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// cpp_set_tube_mv
-void cpp_set_tube_mv(NumericMatrix& tube, const NumericMatrix& h, int ws);
-RcppExport SEXP _IncDTW_cpp_set_tube_mv(SEXP tubeSEXP, SEXP hSEXP, SEXP wsSEXP) {
+// cpp_get_tube_mv
+NumericMatrix cpp_get_tube_mv(const NumericMatrix& h, int ws);
+RcppExport SEXP _IncDTW_cpp_get_tube_mv(SEXP hSEXP, SEXP wsSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix& >::type tube(tubeSEXP);
     Rcpp::traits::input_parameter< const NumericMatrix& >::type h(hSEXP);
     Rcpp::traits::input_parameter< int >::type ws(wsSEXP);
-    cpp_set_tube_mv(tube, h, ws);
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(cpp_get_tube_mv(h, ws));
+    return rcpp_result_gen;
 END_RCPP
 }
 // cpp_kNN_rev

@@ -1,3 +1,5 @@
+export(lowerbound)
+export(lowerbound_tube)
 
 export(dtw2vec)
 export(dtw2vec_univ)
