@@ -59,7 +59,7 @@ test_that("custom dist function",{
       }
    }
    
-   test_that(counter, prod(dim(tmp)))
+   expect_equal(counter, prod(dim(tmp)))
 })
 
 

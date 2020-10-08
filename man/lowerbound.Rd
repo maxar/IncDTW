@@ -24,6 +24,10 @@ vector or matrix, the query time series
   \item{C}{
 vector or matrix, the query time series
 }
+  \item{dist_method}{
+distance method, one of ("norm1", "norm2", "norm2_square")
+}
+
   \item{scale}{
 either "none", so no scaling is performed, or one of ("z", "01") to scale both Q and C. Also see \code{\link{dtw}}
 }

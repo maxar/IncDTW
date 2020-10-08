@@ -1,13 +1,28 @@
+### Version 1.1.4.02
+
+##### Bug Fixes
+
+- missing documentation for dist_method of lowerbound()
+- There was a bug in the test file test_cm.r. I replaced test_that() with expect_equal().
+
+##### New Features
+
+- ...
+
+##### other changes
+
+- ...
+
+
 ### Version 1.1.4.01
 
 ##### Bug Fixes
 
 - there was a buggy test "Double Incremental Matrix EQUAL Scratch" in the test file "test_dtw.R". The error ocurred for some random seeds when the optimal warping path is not unique. The DTW distance measure and the GCM is always unique and correct, but the direction matrix and warping path are not. I set a seed, so that the error should not happen again in this test file. 
--...
 
 ##### New Features
 
-- new function: lb_keogh() and lb_keogh_tube()
+- new function: lowerbound() and lowerbound_tube()
 - ...
 
 ##### other changes
