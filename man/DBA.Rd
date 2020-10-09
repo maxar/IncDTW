@@ -118,7 +118,7 @@ The parameter \code{iter_dist_method} describes the method to measure the progre
 }
 
 \references{
-Sakoe, H.; Chiba, S., Dynamic programming algorithm optimization for spoken word recognition, Acoustics, Speech, and Signal Processing [see also IEEE Transactions on Signal Processing], IEEE Transactions on , vol.26, no.1, pp. 43-49, Feb 1978. \url{http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=1163055}
+Sakoe, H.; Chiba, S., Dynamic programming algorithm optimization for spoken word recognition, Acoustics, Speech, and Signal Processing [see also IEEE Transactions on Signal Processing], IEEE Transactions on , vol.26, no.1, pp. 43-49, Feb 1978. \url{https://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=1163055}
 
 Petitjean, F; Ketterlin, A; Gancarski, P, A global averaging method for dynamic time warping, with applications to clustering, Pattern Recognition, Volume 44, Issue 3, 2011, Pages 678-693, ISSN 0031-3203
 }
